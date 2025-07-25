@@ -1,28 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Minimalist Homepage</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Apple Stock Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding:2rem; }
+    header { text-align:center; margin-bottom:2rem; }
+    canvas { max-width:600px; margin:0 auto; }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Minimalist Homepage</h1>
-    <nav>
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Contact</a>
-    </nav>
+    <h1>Apple Stock Price (AAPL)</h1>
+    <p>Real-time data powered via API Ninjas</p>
   </header>
-  <main>
-    <section class="centerpiece">
-      <h2>Welcome</h2>
-      <p>This is a minimalist homepage in gray, black, and white.</p>
-    </section>
-  </main>
-  <footer>
-    <small>&copy; 2025 Minimalist Web</small>
+  <canvas id="stockChart"></canvas>
+  <footer style="text-align:center; margin-top:2rem;">
+    <small>© 2025 Data Dashboard • API by API Ninjas</small>
   </footer>
+
+  <script>
+    const apiKey = 'YOUR_API_KEY_HERE';
+    const apiUrl = `https://api.api-ninjas.com/v1/stockprice?ticker=AAPL`;
+
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    const stockChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'AAPL Price (USD)', backgroundColor: '#007AFF', borderColor: '#005085', fill: false, data: [] }] },
+      options: { responsive: true, scales: { x: { type: 'time', time: { unit: 'minute', tooltipFormat: 'HH:mm:ss' } }, y: { beginAtZero: false } } }
+    });
+
+    async function fetchPrice() {
+      try {
+        const resp = await fetch(apiUrl, { headers: { 'X-Api-Key': apiKey } });
+        const json = await resp.json();
+        const price = json.price;
+        const now = new Date();
+
+        stockChart.data.labels.push(now);
+        stockChart.data.datasets[0].data.push(price);
+        if (stockChart.data.labels.length > 20) {
+          stockChart.data.labels.shift();
+          stockChart.data.datasets[0].data.shift();
+        }
+        stockChart.update();
+      } catch(e) {
+        console.error('Fetch error:', e);
+      }
+    }
+
+    fetchPrice();
+    setInterval(fetchPrice, 60 * 1000); // updates every minute
+  </script>
 </body>
 </html>
